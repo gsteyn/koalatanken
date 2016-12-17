@@ -1,0 +1,12 @@
+{
+   "addressLine1":"Garage B de vries",
+   "addressLine2":"Zalmstraat 2",
+   "postalCode":"5306 GJ Brakel",
+   "fuelDetails":[
+	  {
+         "fuelType":"Euro 95",
+         "price":1.530,
+         "moreOrLess":-12.2
+      }
+   ]
+}

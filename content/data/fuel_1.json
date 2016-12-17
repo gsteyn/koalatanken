@@ -1,0 +1,17 @@
+{
+   "addressLine1":"G.A TH. Wehkamp",
+   "addressLine2":"Eerschotsestraat 74",
+   "postalCode":"5491 AD Sint-oedenrode",
+   "fuelDetails":[
+      {
+         "fuelType":"Diesel",
+         "price":1.320,
+         "moreOrLess":1.1
+      },
+	  {
+         "fuelType":"Euro 95",
+         "price":1.630,
+         "moreOrLess":2.2
+      }
+   ]
+}

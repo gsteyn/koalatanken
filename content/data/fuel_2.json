@@ -1,0 +1,12 @@
+{
+   "addressLine1":"Garage A Koetsier",
+   "addressLine2":"Uddelerweg 11",
+   "postalCode":"8075 CG Elspeet",
+   "fuelDetails":[
+      {
+         "fuelType":"Diesel",
+         "price":1.230,
+         "moreOrLess":-8.4
+      }
+   ]
+}
