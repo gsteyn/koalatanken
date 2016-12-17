@@ -9,7 +9,7 @@ Functions for managing common tasks for getting and processing dom.
 
 # Retrieves a soup(html dom) from the given url.
 def retrieve_soup(url, parser='html.parser'):
-    print('retrieving soup from -> ' + url)
+    # print('retrieving soup from -> ' + url)
     request = urllib.request.urlopen(url)
     soup = BeautifulSoup(request.read(), parser)
     return soup
