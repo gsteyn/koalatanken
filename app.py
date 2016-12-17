@@ -73,6 +73,14 @@ for link in links:
             if '/station' in href:
                 stationLinks.append(href)
 
+
+for station in stationLinks:
+    json_station = {'station': station}
+    insert_record(json_station)
+
+for post in find_record({'station': '/station/total-sss-de-stoven-zutphen-2037/'}):
+    print(post)
+
 # scrape details of ALL stations
 print(len(stationLinks))
 stationIndex = 0
@@ -128,11 +136,3 @@ for stationLink in stationLinks:
             })
 
         pprint(fuelStation)
-
-for station in stationLinks:
-    json_station = {'station': station}
-    insert_record(json_station)
-
-for post in find_record({'station': '/station/total-sss-de-stoven-zutphen-2037/'}):
-    print(post)
-
