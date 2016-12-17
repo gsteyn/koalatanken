@@ -1,6 +1,6 @@
 {
-   "addressLine1":"Garage B de vries",
-   "addressLine2":"Zalmstraat 2",
+   "name":"Garage B de vries",
+   "addressLine":"Zalmstraat 2",
    "postalCode":"5306 GJ Brakel",
    "fuelDetails":[
 	  {

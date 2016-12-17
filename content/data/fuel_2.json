@@ -1,6 +1,6 @@
 {
-   "addressLine1":"Garage A Koetsier",
-   "addressLine2":"Uddelerweg 11",
+   "name":"Garage A Koetsier",
+   "addressLine":"Uddelerweg 11",
    "postalCode":"8075 CG Elspeet",
    "fuelDetails":[
       {
