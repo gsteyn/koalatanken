@@ -6,6 +6,7 @@ import json
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
 import googlemaps
+import pymongo
 
 
 '''
@@ -48,9 +49,7 @@ def remove_all():
 
 def create_index():
     try:
-        db.koala_tanken.createIndex({
-            'loc': '2dsphere'
-        })
+        db.stations.create_index([('loc', pymongo.GEOSPHERE)])
     except Exception as e:
         print(e)
 
@@ -73,7 +72,7 @@ BASE_URL = 'http://www.brandstof-zoeker.nl'
 
 # initializes db
 db = initialize_db()
-# remove_all()
+remove_all()
 
 # initializes the google maps api
 gmaps = googlemaps.Client(key='AIzaSyCR883xLQrbS98hEshOePFIlrc9vaf9Cr4')
@@ -84,7 +83,7 @@ with open('content/data/fuel_1.json') as data_file:
     coords = [location['lng'], location['lat']]
     data['loc'] = {
         'type': 'Point',
-        'coordinates': coords
+        'coordinates': [4.342460, 52.080592]
     }
     insert_record(data)
 
@@ -94,7 +93,7 @@ with open('content/data/fuel_2.json') as data_file:
     coords = [location['lng'], location['lat']]
     data['loc'] = {
         'type': 'Point',
-        'coordinates': coords
+        'coordinates': [4.344777, 52.079062]
     }
     insert_record(data)
 
@@ -104,21 +103,25 @@ with open('content/data/fuel_3.json') as data_file:
     coords = [location['lng'], location['lat']]
     data['loc'] = {
         'type': 'Point',
-        'coordinates': coords
+        'coordinates': [4.339944, 52.076493]
     }
     insert_record(data)
 
 
-print_db_contents()
+# print_db_contents()
 create_index()
 
-db.koala_tanken.find({
+records = db.stations.find({
     'loc': {
         '$geoWithin': {
-            '$centerSphere': [[4.339181, 52.089521], miles_to_radian(5)]
+            '$centerSphere': [[4.339034, 52.079738], miles_to_radian(5)]
         }
     }
-}).pretty()
+})
+pprint(records)
+
+for record in records:
+    pprint(record)
 
 # for detail in find_all_records({'fuelDetails.moreOrLess': {'$gt' : 0}}):
 #     pprint(detail)
