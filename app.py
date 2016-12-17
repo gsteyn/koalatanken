@@ -3,6 +3,9 @@ import re
 from pprint import pprint
 from bs4 import BeautifulSoup
 
+import pymongo
+import datetime
+
 '''
 Functions for managing common tasks for getting and processing dom.
 '''
@@ -15,12 +18,34 @@ def retrieve_soup(url, parser='html.parser'):
     soup = BeautifulSoup(request.read(), parser)
     return soup
 
+'''
+DB related functions
+'''
+
+def initialize_db():
+    from pymongo import MongoClient
+    client = MongoClient()
+    return client.test_database
+
+def insert_record(record):
+    db.stations.insert_one(record)
+
+def find_record(record):
+    return db.stations.find_one(record)
+
+def remove_all():
+    db.stations.delete_many({})
 
 '''
 > Main procedure code
 '''
 # starting url for retrieving the fuel stations and info
 BASE_URL = 'http://www.brandstof-zoeker.nl'
+
+# initializes db
+db = initialize_db()
+remove_all()
+
 # ensures that the url doesn't end in '/ or ’/ as these url's go back to the main page
 pattern = re.compile('(?!.*\'/$)(?!.*’/$)(?!.*0/$)')
 
@@ -104,6 +129,10 @@ for stationLink in stationLinks:
 
         pprint(fuelStation)
 
-'''
-< Main procedure code
-'''
+for station in stationLinks:
+    json_station = {'station': station}
+    insert_record(json_station)
+
+for post in find_record({'station': '/station/total-sss-de-stoven-zutphen-2037/'}):
+    print(post)
+
