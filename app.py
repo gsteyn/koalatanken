@@ -1,10 +1,12 @@
 import urllib.request
 import re
-from bs4 import BeautifulSoup
+from pprint import pprint
+import json
 
-import pymongo
-import datetime
-import pprint
+from bs4 import BeautifulSoup
+from pymongo import MongoClient
+import googlemaps
+
 
 '''
 Functions for managing common tasks for getting and processing dom.
@@ -23,9 +25,7 @@ DB related functions
 '''
 
 def initialize_db():
-    from pymongo import MongoClient
-    client = MongoClient()
-    return client.test_database
+    return MongoClient().test_database
 
 def insert_record(record):
     db.stations.insert_one(record)
@@ -33,8 +33,15 @@ def insert_record(record):
 def find_record(record):
     return db.stations.find_one(record)
 
+def find_all_records(record):
+    return db.stations.find(record)
+
 def remove_all():
     db.stations.delete_many({})
+
+def print_db_contents():
+    for record in db.stations.find():
+        pprint(record)
 
 '''
 > Main procedure code
@@ -45,6 +52,29 @@ BASE_URL = 'http://www.brandstof-zoeker.nl/'
 # initializes db
 db = initialize_db()
 remove_all()
+
+# initializes the google maps api
+gmaps = googlemaps.Client(key='AIzaSyCR883xLQrbS98hEshOePFIlrc9vaf9Cr4')
+
+with open('content/data/fuel_1.json') as data_file:
+    data = json.load(data_file)
+    data['location'] = gmaps.geocode(data['addressLine2'] + ', ' + data['postalCode'])[0]['geometry']['location']
+    insert_record(data)
+
+with open('content/data/fuel_2.json') as data_file:
+    data = json.load(data_file)
+    data['location'] = gmaps.geocode(data['addressLine2'] + ', ' + data['postalCode'])[0]['geometry']['location']
+    insert_record(data)
+
+with open('content/data/fuel_3.json') as data_file:
+    data = json.load(data_file)
+    data['location'] = gmaps.geocode(data['addressLine2'] + ', ' + data['postalCode'])[0]['geometry']['location']
+    insert_record(data)
+
+# for detail in find_all_records({'fuelDetails.moreOrLess': {'$gt' : 0}}):
+#     pprint(detail)
+
+print_db_contents()
 
 # ensures that the url doesn't end in '/ or ’/ as these url's go back to the main page
 pattern = re.compile('(?!.*\'/$)(?!.*’/$)(?!.*0/$)')
@@ -72,13 +102,5 @@ for link in links:
                 stationLinks.append(href)
 
 print(stationLinks)
-
-
-for station in stationLinks:
-    json_station = {'station': station}
-    insert_record(json_station)
-
-for post in find_record({'station': '/station/total-sss-de-stoven-zutphen-2037/'}):
-    print(post)
 
 
