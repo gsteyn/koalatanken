@@ -2,11 +2,11 @@ import sys
 import getopt
 import urllib.request
 import re
-import json
 import googlemaps
 import pymongo
+import logging
+import pprint
 
-from pprint import pprint
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
 
@@ -34,7 +34,11 @@ def initialize_db():
 
 
 def insert_record(record):
-    db.stations.insert_one(record)
+    try:
+        db.stations.insert_one(record)
+    except Exception as insert_ex:
+        logger.error('could not insert record. please add manually')
+        logger.error(insert_ex)
 
 
 def find_record(record):
@@ -52,13 +56,13 @@ def remove_all():
 def create_index():
     try:
         db.stations.create_index([('loc', pymongo.GEOSPHERE)])
-    except Exception as e:
-        print(e)
+    except Exception as ex:
+        logger.error(ex)
 
 
 def print_db_contents():
     for record in db.stations.find():
-        pprint(record)
+        logger.debug(pprint.pformat(record))
 
 
 def miles_to_radian(miles):
@@ -69,6 +73,23 @@ def miles_to_radian(miles):
 '''
 > Main procedure code
 '''
+# create logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+# add where the information must be logged to
+fileLogHandler = logging.FileHandler('logfile.log')
+stdStreamHandler = logging.StreamHandler()
+# stdStreamHandler = logging.StreamHandler(stream=sys.stdout)
+# log format
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+fileLogHandler.setFormatter(formatter)
+stdStreamHandler.setFormatter(formatter)
+# add handlers
+logger.addHandler(fileLogHandler)
+logger.addHandler(stdStreamHandler)
+
+logger.info('starting koala_tanken tool...')
+
 # starting url for retrieving the fuel stations and info
 BASE_URL = 'http://www.brandstof-zoeker.nl'
 
@@ -79,7 +100,7 @@ db = initialize_db()
 options, args = getopt.getopt(sys.argv[1:], 'r')
 for option, arg in options:
     if option == '-r':
-        print('clearing database!')
+        logger.info('clearing database!')
         remove_all()
 
 # initializes the google maps api
@@ -169,12 +190,12 @@ for link in links:
 
 
 # scrape details of ALL stations
-print(len(stationLinks))
+logger.info('processing {} stations...'.format(len(stationLinks)))
+logger.info('==========================================================================')
 stationIndex = 0
 for stationLink in stationLinks:
     fullUrl = BASE_URL + stationLink
-    print(stationIndex)
-    print(fullUrl)
+    logger.info('processing station index # {} at url {}'.format(stationIndex, fullUrl))
     stationIndex += 1
 
     stationSoup = retrieve_soup(fullUrl)
@@ -194,11 +215,12 @@ for stationLink in stationLinks:
         coords = []
         try:
             location = gmaps.geocode(addressLine + ', ' + postalCode)[0]['geometry']['location']
-            print(location)
+            logger.info('found the following location: lat:{}, lng:{}'.format(location['lat'], location['lng']))
             coords.append(location['lng'])
             coords.append(location['lat'])
         except Exception as e:
-            print(e)
+            logger.error('did not find location for address due to exception:')
+            logger.error(e)
 
         fuelStation = {
             'name': name,
@@ -214,8 +236,10 @@ for stationLink in stationLinks:
         # getting the fuel details
         half2Div = div.findAll('div', attrs={'class': 'half2'})
         if len(half2Div) == 0:
-            pprint(fuelStation)
-            insert_record(fuelStation)
+            logger.warning('FUEL DETAILS WERE NOT FOUND FOR THIS STATION!')
+            logger.warning('inserting fuel station details:')
+            logger.warning(pprint.pformat(fuelStation))
+            # insert_record(fuelStation)
             continue
 
         fuelTypeTags = half2Div[0].findAll('dt')
@@ -230,14 +254,17 @@ for stationLink in stationLinks:
             moreOrLessPrice = float(prices[len(prices) - 1])
             isLess = 'goedkoper' in fuelPriceStr
             moreOrLessPrice = moreOrLessPrice * -1 if isLess else moreOrLessPrice
-            # add fuel price details to fuelstation object
+            # add fuel price details to fuelStation object
             fuelStation['fuelDetails'].append({
                 'fuelType': fuelType,
                 'price': fuelPrice,
                 'moreOrLess': moreOrLessPrice
             })
 
-        pprint(fuelStation)
-        insert_record(fuelStation)
+        logger.info('inserting fuel station details:')
+        logger.info(pprint.pformat(fuelStation))
+        # insert_record(fuelStation)
+
+    logger.info('==========================================================================')
 
 create_index()
