@@ -1,12 +1,13 @@
+import sys
 import urllib.request
 import re
-from pprint import pprint
 import json
-
-from bs4 import BeautifulSoup
-from pymongo import MongoClient
 import googlemaps
 import pymongo
+
+from pprint import pprint
+from bs4 import BeautifulSoup
+from pymongo import MongoClient
 
 
 '''
@@ -60,8 +61,8 @@ def print_db_contents():
 
 
 def miles_to_radian(miles):
-    earthRadiusInMiles = 3959;
-    return miles / earthRadiusInMiles
+    earth_radius_in_miles = 3959
+    return miles / earth_radius_in_miles
 
 
 '''
@@ -77,54 +78,59 @@ remove_all()
 # initializes the google maps api
 gmaps = googlemaps.Client(key='AIzaSyCR883xLQrbS98hEshOePFIlrc9vaf9Cr4')
 
-with open('content/data/fuel_1.json') as data_file:
-    data = json.load(data_file)
-    location = gmaps.geocode(data['addressLine'] + ', ' + data['postalCode'])[0]['geometry']['location']
-    coords = [location['lng'], location['lat']]
-    data['loc'] = {
-        'type': 'Point',
-        'coordinates': [4.342460, 52.080592]
-    }
-    insert_record(data)
-
-with open('content/data/fuel_2.json') as data_file:
-    data = json.load(data_file)
-    location = gmaps.geocode(data['addressLine'] + ', ' + data['postalCode'])[0]['geometry']['location']
-    coords = [location['lng'], location['lat']]
-    data['loc'] = {
-        'type': 'Point',
-        'coordinates': [4.344777, 52.079062]
-    }
-    insert_record(data)
-
-with open('content/data/fuel_3.json') as data_file:
-    data = json.load(data_file)
-    location = gmaps.geocode(data['addressLine'] + ', ' + data['postalCode'])[0]['geometry']['location']
-    coords = [location['lng'], location['lat']]
-    data['loc'] = {
-        'type': 'Point',
-        'coordinates': [4.339944, 52.076493]
-    }
-    insert_record(data)
+# with open('content/data/fuel_1.json') as data_file:
+#     data = json.load(data_file)
+#     location = gmaps.geocode(data['addressLine'] + ', ' + data['postalCode'])[0]['geometry']['location']
+#     coords = [location['lng'], location['lat']]
+#     data['loc'] = {
+#         'type': 'Point',
+#         'coordinates': [4.342460, 52.080592]
+#     }
+#     insert_record(data)
+#
+# with open('content/data/fuel_2.json') as data_file:
+#     data = json.load(data_file)
+#     location = gmaps.geocode(data['addressLine'] + ', ' + data['postalCode'])[0]['geometry']['location']
+#     coords = [location['lng'], location['lat']]
+#     data['loc'] = {
+#         'type': 'Point',
+#         'coordinates': [4.344777, 52.079062]
+#     }
+#     insert_record(data)
+#
+# with open('content/data/fuel_3.json') as data_file:
+#     data = json.load(data_file)
+#     location = gmaps.geocode(data['addressLine'] + ', ' + data['postalCode'])[0]['geometry']['location']
+#     coords = [location['lng'], location['lat']]
+#     data['loc'] = {
+#         'type': 'Point',
+#         'coordinates': [4.339944, 52.076493]
+#     }
+#     insert_record(data)
 
 
 # print_db_contents()
-create_index()
+# create_index()
 
-records = db.stations.find({
-    'loc': {
-        '$geoWithin': {
-            '$centerSphere': [[4.339034, 52.079738], miles_to_radian(5)]
-        }
-    }
-})
-pprint(records)
-
-for record in records:
-    pprint(record)
-
+'''
+> Example on how to search for stations within a certain radius.
+'''
+# records = db.stations.find({
+#     'loc': {
+#         '$geoWithin': {
+#             '$centerSphere': [[4.339034, 52.079738], miles_to_radian(5)]
+#         }
+#     }
+# })
+# pprint(records)
+#
+# for record in records:
+#     pprint(record)
 # for detail in find_all_records({'fuelDetails.moreOrLess': {'$gt' : 0}}):
 #     pprint(detail)
+'''
+< Example ...
+'''
 
 
 # ensures that the url doesn't end in '/ or ’/ as these url's go back to the main page
@@ -227,4 +233,4 @@ letterListDiv = mainPage.find_all('div', attrs={'class': 'left'})
 #         pprint(fuelStation)
 #         insert_record(fuelStation)
 
-# ensure_index()
+create_index()
