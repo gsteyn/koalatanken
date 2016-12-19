@@ -1,4 +1,5 @@
 import sys
+import getopt
 import urllib.request
 import re
 import json
@@ -73,7 +74,13 @@ BASE_URL = 'http://www.brandstof-zoeker.nl'
 
 # initializes db
 db = initialize_db()
-remove_all()
+
+# option -r to clear database. usage: app.py -r
+options, args = getopt.getopt(sys.argv[1:], 'r')
+for option, arg in options:
+    if option == '-r':
+        print('clearing database!')
+        remove_all()
 
 # initializes the google maps api
 gmaps = googlemaps.Client(key='AIzaSyCR883xLQrbS98hEshOePFIlrc9vaf9Cr4')
@@ -233,4 +240,4 @@ letterListDiv = mainPage.find_all('div', attrs={'class': 'left'})
 #         pprint(fuelStation)
 #         insert_record(fuelStation)
 
-create_index()
+# create_index()
