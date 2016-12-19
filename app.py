@@ -39,6 +39,15 @@ def insert_record(record):
     except Exception as insert_ex:
         logger.error('could not insert record. please add manually')
         logger.error(insert_ex)
+        insert_error_record(record)
+
+
+def insert_error_record(record):
+    try:
+        db.error_stations.insert_one(record)
+    except Exception as error_ex:
+        logger.error('could not insert error record: {}'.format(record))
+        logger.error(error_ex)
 
 
 def find_record(record):
@@ -61,6 +70,7 @@ def create_index():
 
 
 def print_db_contents():
+    print('printing stations table:')
     for record in db.stations.find():
         logger.debug(pprint.pformat(record))
 
@@ -79,7 +89,6 @@ logger.setLevel(logging.INFO)
 # add where the information must be logged to
 fileLogHandler = logging.FileHandler('logfile.log')
 stdStreamHandler = logging.StreamHandler()
-# stdStreamHandler = logging.StreamHandler(stream=sys.stdout)
 # log format
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 fileLogHandler.setFormatter(formatter)
@@ -96,15 +105,31 @@ BASE_URL = 'http://www.brandstof-zoeker.nl'
 # initializes db
 db = initialize_db()
 
+# starting index of scraping tool
+startIndex = 0
+apiKey = 'AIzaSyBoqTuFSXre_0F0j9IGHtAiqRfP6VwaxE8'
+# apiKey = 'AIzaSyCyarQ-B7tOnY4hhrQYXrO3_TH3wHidcE4' # new api key
+# apiKey = 'AIzaSyBa74BR6m5XwupzKTaq5FVY8QJXIIhRtrQ'
+# apiKey = 'AIzaSyCR883xLQrbS98hEshOePFIlrc9vaf9Cr4'
+
 # option -r to clear database. usage: app.py -r
-options, args = getopt.getopt(sys.argv[1:], 'r')
+# option -i to indicate starting index. usage: app.py -i 2345
+# option -g to specify a google maps api key. usage: app.py -g bIGass4p1k3yg03sh3r3
+options, args = getopt.getopt(sys.argv[1:], 'ri:g:')
 for option, arg in options:
+    logger.info('found option {} with arg {}'.format(option, arg))
     if option == '-r':
-        logger.info('clearing database!')
         remove_all()
+    elif option == '-i':
+        startIndex = int(arg)
+    elif option == '-g':
+        apiKey = arg
+
+logger.info('starting at index: {}'.format(startIndex))
+logger.info('google api key: {}'.format(apiKey))
 
 # initializes the google maps api
-gmaps = googlemaps.Client(key='AIzaSyCR883xLQrbS98hEshOePFIlrc9vaf9Cr4')
+gmaps = googlemaps.Client(key=apiKey)
 
 # with open('content/data/fuel_1.json') as data_file:
 #     data = json.load(data_file)
@@ -163,6 +188,7 @@ gmaps = googlemaps.Client(key='AIzaSyCR883xLQrbS98hEshOePFIlrc9vaf9Cr4')
 
 # ensures that the url doesn't end in '/ or ’/ as these url's go back to the main page
 pattern = re.compile('(?!.*\'/$)(?!.*’/$)(?!.*0/$)')
+postal_pattern = re.compile('^\d{4}')
 
 mainPage = retrieve_soup(BASE_URL + '/station/')
 letterListDiv = mainPage.find_all('div', attrs={'class': 'left'})
@@ -192,8 +218,8 @@ for link in links:
 # scrape details of ALL stations
 logger.info('processing {} stations...'.format(len(stationLinks)))
 logger.info('==========================================================================')
-stationIndex = 0
-for stationLink in stationLinks:
+stationIndex = startIndex
+for stationLink in stationLinks[startIndex:]:
     fullUrl = BASE_URL + stationLink
     logger.info('processing station index # {} at url {}'.format(stationIndex, fullUrl))
     stationIndex += 1
@@ -209,7 +235,16 @@ for stationLink in stationLinks:
         name = addressContents[2].strip(' \t\n\r')
         addressLine = addressContents[4].strip(' \t\n\r')
         anchors = half1Div[0].findAll('a')
+
         postalCode = anchors[0].getText() + ' ' + anchors[1].getText()
+        if not postal_pattern.match(anchors[0].getText()):
+            logger.info('postal code does not match pattern. getting from addressContents[6]')
+            postalCode = addressContents[6].strip(' \t\n\r') + ' ' + anchors[0].getText()
+
+        logger.debug('addressContents: {}'.format(addressContents))
+        logger.debug('name: {}'.format(name))
+        logger.debug('addressLine: {}'.format(addressLine))
+        logger.debug('anchors: {}'.format(anchors))
 
         location = {}
         coords = []
@@ -239,7 +274,7 @@ for stationLink in stationLinks:
             logger.warning('FUEL DETAILS WERE NOT FOUND FOR THIS STATION!')
             logger.warning('inserting fuel station details:')
             logger.warning(pprint.pformat(fuelStation))
-            # insert_record(fuelStation)
+            insert_record(fuelStation)
             continue
 
         fuelTypeTags = half2Div[0].findAll('dt')
@@ -263,7 +298,7 @@ for stationLink in stationLinks:
 
         logger.info('inserting fuel station details:')
         logger.info(pprint.pformat(fuelStation))
-        # insert_record(fuelStation)
+        insert_record(fuelStation)
 
     logger.info('==========================================================================')
 
